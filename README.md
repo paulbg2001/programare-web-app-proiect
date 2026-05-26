@@ -44,7 +44,11 @@ Daca utilizatorul `root` nu are parola, poti rula:
 mysql -u root < database.sql
 ```
 
-Fisierul `database.sql` creeaza baza de date `car_management` si tabela `users`.
+Fisierul `database.sql` creeaza baza de date `car_management` si tabelele:
+
+- `users`
+- `vehicles`
+- `vehicle_documents`
 
 Conexiunea foloseste implicit aceste valori:
 
@@ -72,13 +76,19 @@ Apoi deschide in browser:
 http://127.0.0.1:8000/
 ```
 
-Pagina principala redirectioneaza automat catre login.
+Pagina principala redirectioneaza automat catre login daca nu esti autentificat.
+Dupa autentificare, aplicatia deschide dashboard-ul:
+
+```text
+http://127.0.0.1:8000/dashboard.php
+```
 
 ## Structura Proiectului
 
 ```text
-public/
-  index.php              redirectioneaza catre login
+  public/
+  index.php              redirectioneaza catre login sau dashboard
+  dashboard.php          pagina principala cu statistici reale din baza de date
   auth/
     login.php            pagina de autentificare
     register.php         pagina de creare cont
@@ -91,6 +101,8 @@ public/
 
 src/
   db.php                 conexiunea PDO la MySQL
+  DashboardRepository.php interogari SQL pentru vehicule si documente
+  DashboardService.php   agregare date pentru dashboard
   logger.php             logger simplu pentru erori
 
 database.sql             scriptul pentru baza de date

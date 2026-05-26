@@ -24,7 +24,11 @@ if (!isset($_SESSION['user_id'])) {
                 </p>
                 <h1 class="topbar-title">Vehicles</h1>
             </div>
-            <a href="../auth/logout.php">Logout</a>
+            <nav class="topbar-nav" aria-label="Main navigation">
+                <a href="../dashboard.php">Dashboard</a>
+                <a href="index.php" aria-current="page">Vehicles</a>
+                <a href="../auth/logout.php">Logout</a>
+            </nav>
         </header>
 
         <section class="page-panel">
