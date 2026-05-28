@@ -6,7 +6,7 @@ function getDbConnection(): PDO
     $port = getenv('DB_PORT') ?: '3306';
     $name = getenv('DB_NAME') ?: 'car_management';
     $user = getenv('DB_USER') ?: 'root';
-    $pass = getenv('DB_PASS') ?: 'root';
+    $pass = getenv('DB_PASS') ?: 'Root1234!';
 
     $dsn = "mysql:host=$host;port=$port;dbname=$name;charset=utf8mb4";
 

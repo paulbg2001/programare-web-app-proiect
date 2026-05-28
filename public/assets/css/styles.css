@@ -97,7 +97,20 @@ a:hover {
     outline: none;
 }
 
-.form-row input:focus {
+.form-row select {
+    width: 100%;
+    height: 54px;
+    padding: 0 14px;
+    color: var(--text);
+    background: var(--field-bg);
+    border: 2px solid var(--field-border);
+    border-radius: 8px;
+    font: inherit;
+    outline: none;
+}
+
+.form-row input:focus,
+.form-row select:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 4px rgba(121, 175, 242, 0.18);
 }
@@ -153,6 +166,14 @@ a:hover {
 .message.success {
     color: var(--success);
     background: rgba(154, 240, 184, 0.1);
+}
+
+.message p {
+    margin: 0;
+}
+
+.message p + p {
+    margin-top: 6px;
 }
 
 .field-error {
@@ -233,6 +254,11 @@ a:hover {
     margin: 0 auto;
 }
 
+.management-shell {
+    max-width: 1180px;
+    margin: 0 auto;
+}
+
 .dashboard-heading,
 .section-title-row {
     display: flex;
@@ -306,6 +332,36 @@ a:hover {
     border-radius: 8px;
 }
 
+.management-grid {
+    display: grid;
+    grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+    gap: 18px;
+    align-items: start;
+}
+
+.management-form-panel,
+.management-list-panel {
+    border-radius: 8px;
+}
+
+.management-form {
+    display: grid;
+    gap: 16px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.compact-button {
+    width: auto;
+    min-width: 140px;
+    min-height: 42px;
+    padding: 0 18px;
+    font-size: 18px;
+}
+
 .documents-table-wrap {
     overflow-x: auto;
 }
@@ -340,6 +396,77 @@ a:hover {
     border-bottom: 0;
 }
 
+.management-table th:last-child,
+.management-table td:last-child {
+    width: 168px;
+}
+
+.inline-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.inline-actions form {
+    margin: 0;
+}
+
+.secondary-button,
+.danger-button,
+.filter-row a,
+.pagination a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 34px;
+    padding: 7px 10px;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    color: var(--text);
+    background: var(--panel-soft);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.danger-button {
+    color: var(--danger);
+    border-color: rgba(255, 154, 154, 0.4);
+    background: var(--danger-bg);
+}
+
+.secondary-button:hover,
+.filter-row a:hover,
+.pagination a:hover {
+    text-decoration: none;
+    border-color: var(--accent);
+}
+
+.danger-button:hover {
+    border-color: var(--danger);
+}
+
+.filter-row,
+.pagination {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 0 0 16px;
+}
+
+.pagination {
+    margin: 16px 0 0;
+}
+
+.filter-row a[aria-current="page"],
+.pagination a[aria-current="page"] {
+    color: #06111c;
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
 .status-pill {
     display: inline-flex;
     align-items: center;
@@ -363,6 +490,21 @@ a:hover {
 .status-valid {
     color: var(--success);
     background: var(--success-bg);
+}
+
+.status-active {
+    color: var(--success);
+    background: var(--success-bg);
+}
+
+.status-inactive {
+    color: var(--muted);
+    background: rgba(184, 195, 207, 0.12);
+}
+
+.status-service {
+    color: var(--warning);
+    background: var(--warning-bg);
 }
 
 .empty-state {
@@ -424,6 +566,10 @@ a:hover {
     .section-title-row {
         align-items: flex-start;
         flex-direction: column;
+    }
+
+    .management-grid {
+        grid-template-columns: 1fr;
     }
 
     .stats-grid {
