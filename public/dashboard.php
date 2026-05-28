@@ -73,6 +73,7 @@ function documentStatusLabel(string $status): string
             <nav class="topbar-nav" aria-label="Main navigation">
                 <a href="dashboard.php" aria-current="page">Dashboard</a>
                 <a href="vehicles/index.php">Vehicles</a>
+                <a href="drivers/index.php">Drivers</a>
                 <a href="auth/logout.php">Logout</a>
             </nav>
         </header>
