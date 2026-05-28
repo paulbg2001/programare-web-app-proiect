@@ -1,14 +1,10 @@
 <?php
-session_start();
-
-if (!isset($_SESSION['user_id'])) {
-    header('Location: ../auth/login.php');
-    exit;
-}
-
+require_once __DIR__ . '/../../src/auth.php';
 require_once __DIR__ . '/../../src/db.php';
 require_once __DIR__ . '/../../src/logger.php';
 require_once __DIR__ . '/../../src/VehicleRepository.php';
+
+requireAuth('/auth/login.php');
 
 function e(string $value): string
 {
@@ -156,33 +152,13 @@ try {
 }
 
 $isEditing = $formData['id'] !== '';
-?>
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Vehicles | Car Management</title>
-    <link rel="stylesheet" href="../assets/css/styles.css">
-</head>
-<body>
-    <main class="app-page">
-        <header class="topbar">
-            <div>
-                <p class="brand">
-                    <span class="brand-mark">CM</span>
-                    <span>Car Management</span>
-                </p>
-                <h1 class="topbar-title">Vehicles</h1>
-            </div>
-            <nav class="topbar-nav" aria-label="Main navigation">
-                <a href="../dashboard.php">Dashboard</a>
-                <a href="index.php" aria-current="page">Vehicles</a>
-                <a href="../drivers/index.php">Drivers</a>
-                <a href="../auth/logout.php">Logout</a>
-            </nav>
-        </header>
 
+$pageTitle = 'Vehicule';
+$pageKicker = 'Gestiune flota';
+$activePage = 'vehicles';
+
+require __DIR__ . '/../includes/header.php';
+?>
         <section class="management-shell">
             <?php if ($systemError): ?>
                 <p class="message error dashboard-message"><?php echo e($systemError); ?></p>
@@ -310,6 +286,4 @@ $isEditing = $formData['id'] !== '';
                 </section>
             </div>
         </section>
-    </main>
-</body>
-</html>
+<?php require __DIR__ . '/../includes/footer.php'; ?>

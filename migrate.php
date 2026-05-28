@@ -38,6 +38,22 @@ function indexExists(PDO $db, string $table, string $index): bool
 
 $db = getDbConnection();
 
+if (!columnExists($db, 'users', 'username')) {
+    $db->exec('ALTER TABLE users ADD COLUMN username VARCHAR(60) NULL AFTER id');
+}
+
+$db->exec(
+    "UPDATE users
+     SET username = CONCAT('user', id)
+     WHERE username IS NULL OR username = ''"
+);
+
+$db->exec('ALTER TABLE users MODIFY username VARCHAR(60) NOT NULL');
+
+if (!indexExists($db, 'users', 'username')) {
+    $db->exec('CREATE UNIQUE INDEX username ON users (username)');
+}
+
 if (!columnExists($db, 'vehicles', 'vin')) {
     $db->exec('ALTER TABLE vehicles ADD COLUMN vin VARCHAR(17) NULL AFTER registration_number');
 }
@@ -73,6 +89,23 @@ $db->exec(
         status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+);
+
+$db->exec(
+    "CREATE TABLE IF NOT EXISTS vehicle_assignments (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        vehicle_id INT NOT NULL,
+        driver_id INT NOT NULL,
+        start_date DATE NOT NULL,
+        end_date DATE DEFAULT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT fk_vehicle_assignments_vehicle
+            FOREIGN KEY (vehicle_id) REFERENCES vehicles(id)
+            ON DELETE CASCADE,
+        CONSTRAINT fk_vehicle_assignments_driver
+            FOREIGN KEY (driver_id) REFERENCES drivers(id)
+            ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
 );
 

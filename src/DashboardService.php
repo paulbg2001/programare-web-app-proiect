@@ -16,6 +16,9 @@ class DashboardService
         return [
             'vehicles' => $this->repository->getVehicleStats(),
             'documents' => $this->repository->getDocumentStats(),
+            'assignments' => [
+                'active' => $this->repository->getActiveAssignmentsCount(),
+            ],
             'importantDocuments' => $this->repository->getImportantDocuments(),
         ];
     }
