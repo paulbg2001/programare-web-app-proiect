@@ -47,6 +47,22 @@ class DashboardRepository
         ];
     }
 
+    public function getActiveAssignmentsCount(): int
+    {
+        if (!$this->tableExists('vehicle_assignments')) {
+            return 0;
+        }
+
+        $stmt = $this->db->query(
+            "SELECT COUNT(*)
+             FROM vehicle_assignments
+             WHERE start_date <= CURDATE()
+               AND (end_date IS NULL OR end_date >= CURDATE())"
+        );
+
+        return (int) $stmt->fetchColumn();
+    }
+
     public function getImportantDocuments(): array
     {
         $stmt = $this->db->query(
@@ -68,5 +84,18 @@ class DashboardRepository
         );
 
         return $stmt->fetchAll();
+    }
+
+    private function tableExists(string $table): bool
+    {
+        $stmt = $this->db->prepare(
+            'SELECT COUNT(*)
+             FROM information_schema.TABLES
+             WHERE TABLE_SCHEMA = DATABASE()
+               AND TABLE_NAME = :table_name'
+        );
+        $stmt->execute(['table_name' => $table]);
+
+        return (int) $stmt->fetchColumn() > 0;
     }
 }

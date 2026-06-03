@@ -50,6 +50,7 @@ Fisierul `database.sql` creeaza baza de date `car_management` si tabelele:
 - `vehicles`
 - `drivers`
 - `vehicle_documents`
+- `vehicle_assignments`
 
 Conexiunea foloseste implicit aceste valori:
 
@@ -96,10 +97,26 @@ http://127.0.0.1:8000/dashboard.php
   public/
   index.php              redirectioneaza catre login sau dashboard
   dashboard.php          pagina principala cu statistici reale din baza de date
+  includes/
+    header.php           layout comun cu sidebar si header pentru paginile protejate
+    footer.php           inchide layout-ul comun
   auth/
-    login.php            pagina de autentificare
-    register.php         pagina de creare cont
+    login.php            pagina de autentificare si creare cont
+    register.php         redirectioneaza catre starea de register din login.php
     logout.php           delogare
+  assignments/
+    index.php            pagina protejata pentru modulul Alocari
+  documents/
+    index.php            pagina protejata pentru modulul Documente
+  maintenance/
+    index.php            pagina protejata pentru modulul Mentenanta
+  tires/
+    index.php            pagina protejata pentru modulul Anvelope
+  profile/
+    index.php            pagina protejata pentru Profil
+  api/
+    vehicles.php         endpoint protejat pentru CRUD backend Vehicule
+    drivers.php          endpoint protejat pentru CRUD backend Soferi
   vehicles/
     index.php            listare, adaugare, editare si dezactivare vehicule
   drivers/
@@ -109,6 +126,7 @@ http://127.0.0.1:8000/dashboard.php
     js/auth.js           validare simpla pentru formulare
 
 src/
+  auth.php               helper pentru paginile protejate
   db.php                 conexiunea PDO la MySQL
   DashboardRepository.php interogari SQL pentru vehicule si documente
   DashboardService.php   agregare date pentru dashboard
@@ -122,6 +140,22 @@ logs/app.log             fisier generat automat pentru erori locale
 ```
 
 ## Dezvoltare
+
+## Endpointuri Backend
+
+Endpointurile protejate pentru taskul #8 accepta requesturi cu sesiune autentificata:
+
+```text
+GET  /api/vehicles.php?page=1&per_page=8
+GET  /api/vehicles.php?id=1
+POST /api/vehicles.php action=create|update|deactivate
+
+GET  /api/drivers.php?status=active
+GET  /api/drivers.php?id=1
+POST /api/drivers.php action=create|update|deactivate
+```
+
+Pentru requesturi JSON se poate folosi si `_method=PUT`, `_method=PATCH` sau `_method=DELETE` prin POST.
 
 Pentru modificari normale in fisiere PHP, CSS sau JavaScript, nu trebuie repornit serverul PHP. Este suficient sa dai refresh in browser.
 

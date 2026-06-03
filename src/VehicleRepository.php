@@ -11,6 +11,7 @@ class VehicleRepository
 
     public function listPaginated(int $page, int $perPage): array
     {
+        $perPage = max(1, min($perPage, 100));
         $total = (int) $this->db->query('SELECT COUNT(*) FROM vehicles')->fetchColumn();
         $totalPages = max(1, (int) ceil($total / $perPage));
         $page = max(1, min($page, $totalPages));
@@ -47,8 +48,10 @@ class VehicleRepository
         return $vehicle ?: null;
     }
 
-    public function create(array $data): void
+    public function create(array $data): int
     {
+        $data = $this->normalizeVehicleData($data);
+        $this->validateVehicleData($data);
         $this->assertRegistrationIsUnique($data['registration_number']);
         $this->assertVinIsUnique($data['vin']);
 
@@ -57,10 +60,18 @@ class VehicleRepository
              VALUES (:registration_number, :vin, :make, :model, :status)'
         );
         $stmt->execute($data);
+
+        return (int) $this->db->lastInsertId();
     }
 
     public function update(int $id, array $data): void
     {
+        if ($id <= 0 || $this->findById($id) === null) {
+            throw new DomainException('Vehicle not found.');
+        }
+
+        $data = $this->normalizeVehicleData($data);
+        $this->validateVehicleData($data);
         $this->assertRegistrationIsUnique($data['registration_number'], $id);
         $this->assertVinIsUnique($data['vin'], $id);
 
@@ -85,12 +96,55 @@ class VehicleRepository
 
     public function deactivate(int $id): void
     {
+        if ($id <= 0 || $this->findById($id) === null) {
+            throw new DomainException('Vehicle not found.');
+        }
+
         $stmt = $this->db->prepare(
             "UPDATE vehicles
              SET status = 'inactive'
              WHERE id = :id"
         );
         $stmt->execute(['id' => $id]);
+    }
+
+    private function normalizeVehicleData(array $data): array
+    {
+        return [
+            'registration_number' => strtoupper($this->cleanText((string) ($data['registration_number'] ?? ''), 30)),
+            'vin' => strtoupper(str_replace(' ', '', $this->cleanText((string) ($data['vin'] ?? ''), 17))),
+            'make' => $this->cleanText((string) ($data['make'] ?? ''), 80),
+            'model' => $this->cleanText((string) ($data['model'] ?? ''), 80),
+            'status' => $this->cleanText((string) ($data['status'] ?? 'active'), 20),
+        ];
+    }
+
+    private function validateVehicleData(array $data): void
+    {
+        if (!preg_match('/^[A-Z0-9 -]{2,30}$/', $data['registration_number'])) {
+            throw new DomainException('Registration number must contain 2-30 letters, numbers, spaces or dashes.');
+        }
+
+        if (!preg_match('/^[A-HJ-NPR-Z0-9]{17}$/', $data['vin'])) {
+            throw new DomainException('VIN must contain exactly 17 valid characters.');
+        }
+
+        if ($data['make'] === '') {
+            throw new DomainException('Make is required.');
+        }
+
+        if ($data['model'] === '') {
+            throw new DomainException('Model is required.');
+        }
+
+        if (!in_array($data['status'], ['active', 'inactive', 'service'], true)) {
+            throw new DomainException('Choose a valid status.');
+        }
+    }
+
+    private function cleanText(string $value, int $maxLength): string
+    {
+        return substr(trim(strip_tags($value)), 0, $maxLength);
     }
 
     private function assertRegistrationIsUnique(string $registrationNumber, ?int $exceptId = null): void

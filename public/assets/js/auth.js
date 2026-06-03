@@ -13,21 +13,42 @@ function clearErrors(form) {
     });
 }
 
+function isValidEmail(value) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function isValidUsername(value) {
+    return /^[a-z0-9_]{3,40}$/.test(value);
+}
+
 document.querySelectorAll('[data-auth-form]').forEach(function (form) {
     form.addEventListener('submit', function (event) {
         clearErrors(form);
 
+        var isValid = true;
+        var username = form.querySelector('input[name="username"]');
         var email = form.querySelector('input[name="email"]');
         var password = form.querySelector('input[name="password"]');
         var confirmPassword = form.querySelector('input[name="confirm_password"]');
-        var isValid = true;
 
-        if (email && !email.value.includes('@')) {
+        form.querySelectorAll('[required]').forEach(function (input) {
+            if (!input.value.trim()) {
+                showFieldError(input, 'This field is required.');
+                isValid = false;
+            }
+        });
+
+        if (username && username.value.trim() && !isValidUsername(username.value.trim())) {
+            showFieldError(username, 'Use 3-40 lowercase letters, numbers or underscores.');
+            isValid = false;
+        }
+
+        if (email && email.value.trim() && !isValidEmail(email.value.trim())) {
             showFieldError(email, 'Enter a valid email address.');
             isValid = false;
         }
 
-        if (password && password.value.length < 6) {
+        if (password && password.value && password.value.length < 6) {
             showFieldError(password, 'Password must have at least 6 characters.');
             isValid = false;
         }

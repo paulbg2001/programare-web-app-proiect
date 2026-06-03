@@ -1,14 +1,10 @@
 <?php
-session_start();
-
-if (!isset($_SESSION['user_id'])) {
-    header('Location: auth/login.php');
-    exit;
-}
-
+require_once __DIR__ . '/../src/auth.php';
 require_once __DIR__ . '/../src/db.php';
 require_once __DIR__ . '/../src/logger.php';
 require_once __DIR__ . '/../src/DashboardService.php';
+
+requireAuth('/auth/login.php');
 
 $dashboard = [
     'vehicles' => [
@@ -19,6 +15,9 @@ $dashboard = [
     'documents' => [
         'expired' => 0,
         'expiring_soon' => 0,
+    ],
+    'assignments' => [
+        'active' => 0,
     ],
     'importantDocuments' => [],
 ];
@@ -46,45 +45,25 @@ function e(string $value): string
 function documentStatusLabel(string $status): string
 {
     return [
-        'expired' => 'Expired',
-        'warning' => 'Expires soon',
-        'valid' => 'Valid',
-    ][$status] ?? 'Valid';
+        'expired' => 'Expirat',
+        'warning' => 'Expira curand',
+        'valid' => 'Valabil',
+    ][$status] ?? 'Valabil';
 }
-?>
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Dashboard | Car Management</title>
-    <link rel="stylesheet" href="assets/css/styles.css">
-</head>
-<body>
-    <main class="app-page">
-        <header class="topbar">
-            <div>
-                <p class="brand">
-                    <span class="brand-mark">CM</span>
-                    <span>Car Management</span>
-                </p>
-                <h1 class="topbar-title">Fleet Dashboard</h1>
-            </div>
-            <nav class="topbar-nav" aria-label="Main navigation">
-                <a href="dashboard.php" aria-current="page">Dashboard</a>
-                <a href="vehicles/index.php">Vehicles</a>
-                <a href="drivers/index.php">Drivers</a>
-                <a href="auth/logout.php">Logout</a>
-            </nav>
-        </header>
 
+$pageTitle = 'Homepage';
+$pageKicker = 'Sumar flota';
+$activePage = 'dashboard';
+
+require __DIR__ . '/includes/header.php';
+?>
         <section class="dashboard-shell" aria-labelledby="dashboard-title">
             <div class="dashboard-heading">
                 <div>
-                    <p class="eyebrow">Current fleet status</p>
-                    <h2 id="dashboard-title">Overview</h2>
+                    <p class="eyebrow">Status curent</p>
+                    <h2 id="dashboard-title">Indicatori operationali</h2>
                 </div>
-                <p class="dashboard-date"><?php echo e(date('F j, Y')); ?></p>
+                <p class="dashboard-date"><?php echo e(date('d.m.Y')); ?></p>
             </div>
 
             <?php if ($error): ?>
@@ -93,11 +72,11 @@ function documentStatusLabel(string $status): string
 
             <div class="stats-grid" aria-label="Fleet and document statistics">
                 <article class="stat-card">
-                    <span class="stat-label">Total vehicles</span>
+                    <span class="stat-label">Vehicule totale</span>
                     <strong><?php echo (int) $dashboard['vehicles']['total']; ?></strong>
                 </article>
                 <article class="stat-card">
-                    <span class="stat-label">Active vehicles</span>
+                    <span class="stat-label">Vehicule active</span>
                     <strong><?php echo (int) $dashboard['vehicles']['active']; ?></strong>
                 </article>
                 <article class="stat-card">
@@ -105,19 +84,23 @@ function documentStatusLabel(string $status): string
                     <strong><?php echo (int) $dashboard['vehicles']['inactive_service']; ?></strong>
                 </article>
                 <article class="stat-card danger-card">
-                    <span class="stat-label">Expired documents</span>
+                    <span class="stat-label">Documente expirate</span>
                     <strong><?php echo (int) $dashboard['documents']['expired']; ?></strong>
                 </article>
                 <article class="stat-card warning-card">
-                    <span class="stat-label">Expiring in 30 days</span>
+                    <span class="stat-label">Expira in 30 zile</span>
                     <strong><?php echo (int) $dashboard['documents']['expiring_soon']; ?></strong>
+                </article>
+                <article class="stat-card accent-card">
+                    <span class="stat-label">Alocari active</span>
+                    <strong><?php echo (int) $dashboard['assignments']['active']; ?></strong>
                 </article>
             </div>
 
             <section class="documents-section" aria-labelledby="documents-title">
                 <div class="section-title-row">
-                    <h2 id="documents-title">Documents Requiring Attention</h2>
-                    <span><?php echo count($dashboard['importantDocuments']); ?> shown</span>
+                    <h2 id="documents-title">Documente monitorizate</h2>
+                    <span><?php echo count($dashboard['importantDocuments']); ?> afisate</span>
                 </div>
 
                 <?php if ($dashboard['importantDocuments']): ?>
@@ -125,9 +108,9 @@ function documentStatusLabel(string $status): string
                         <table class="documents-table">
                             <thead>
                                 <tr>
-                                    <th>Vehicle</th>
+                                    <th>Vehicul</th>
                                     <th>Document</th>
-                                    <th>Expiration date</th>
+                                    <th>Data expirarii</th>
                                     <th>Status</th>
                                 </tr>
                             </thead>
@@ -151,10 +134,8 @@ function documentStatusLabel(string $status): string
                         </table>
                     </div>
                 <?php else: ?>
-                    <p class="empty-state">No vehicle documents found in the database.</p>
+                    <p class="empty-state">Nu exista documente in baza de date.</p>
                 <?php endif; ?>
             </section>
         </section>
-    </main>
-</body>
-</html>
+<?php require __DIR__ . '/includes/footer.php'; ?>
