@@ -44,7 +44,12 @@ Daca utilizatorul `root` nu are parola, poti rula:
 mysql -u root < database.sql
 ```
 
-Fisierul `database.sql` creeaza baza de date `car_management` si tabela `users`.
+Fisierul `database.sql` creeaza baza de date `car_management` si tabelele:
+
+- `users`
+- `vehicles`
+- `drivers`
+- `vehicle_documents`
 
 Conexiunea foloseste implicit aceste valori:
 
@@ -53,10 +58,16 @@ DB_HOST=localhost
 DB_PORT=3306
 DB_NAME=car_management
 DB_USER=root
-DB_PASS=root
+DB_PASS=Root1234!
 ```
 
 Daca ai alt utilizator sau alta parola in MySQL, actualizeaza variabilele de mediu sau valorile implicite din `src/db.php`.
+
+Daca ai deja baza de date creata si vrei sa aplici modificarile noi de schema, ruleaza:
+
+```bash
+php migrate.php
+```
 
 ## Pornire Aplicatie
 
@@ -72,28 +83,41 @@ Apoi deschide in browser:
 http://127.0.0.1:8000/
 ```
 
-Pagina principala redirectioneaza automat catre login.
+Pagina principala redirectioneaza automat catre login daca nu esti autentificat.
+Dupa autentificare, aplicatia deschide dashboard-ul:
+
+```text
+http://127.0.0.1:8000/dashboard.php
+```
 
 ## Structura Proiectului
 
 ```text
-public/
-  index.php              redirectioneaza catre login
+  public/
+  index.php              redirectioneaza catre login sau dashboard
+  dashboard.php          pagina principala cu statistici reale din baza de date
   auth/
     login.php            pagina de autentificare
     register.php         pagina de creare cont
     logout.php           delogare
   vehicles/
-    index.php            pagina pentru vehicule, momentan goala
+    index.php            listare, adaugare, editare si dezactivare vehicule
+  drivers/
+    index.php            listare, filtrare, adaugare, editare si dezactivare soferi
   assets/
     css/styles.css       stilurile aplicatiei
     js/auth.js           validare simpla pentru formulare
 
 src/
   db.php                 conexiunea PDO la MySQL
+  DashboardRepository.php interogari SQL pentru vehicule si documente
+  DashboardService.php   agregare date pentru dashboard
+  VehicleRepository.php  operatii CRUD pentru vehicule
+  DriverRepository.php   operatii CRUD pentru soferi
   logger.php             logger simplu pentru erori
 
 database.sql             scriptul pentru baza de date
+migrate.php              actualizeaza schema unei baze existente
 logs/app.log             fisier generat automat pentru erori locale
 ```
 
