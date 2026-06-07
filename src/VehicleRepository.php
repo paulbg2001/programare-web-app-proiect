@@ -18,7 +18,7 @@ class VehicleRepository
         $offset = ($page - 1) * $perPage;
 
         $stmt = $this->db->prepare(
-            'SELECT id, registration_number, vin, make, model, status, created_at
+            'SELECT id, registration_number, vin, make, model, year, fuel_type, status, created_at
              FROM vehicles
              ORDER BY created_at DESC, id DESC
              LIMIT :limit OFFSET :offset'
@@ -38,7 +38,7 @@ class VehicleRepository
     public function findById(int $id): ?array
     {
         $stmt = $this->db->prepare(
-            'SELECT id, registration_number, vin, make, model, status
+            'SELECT id, registration_number, vin, make, model, year, fuel_type, status
              FROM vehicles
              WHERE id = :id'
         );
@@ -56,8 +56,8 @@ class VehicleRepository
         $this->assertVinIsUnique($data['vin']);
 
         $stmt = $this->db->prepare(
-            'INSERT INTO vehicles (registration_number, vin, make, model, status)
-             VALUES (:registration_number, :vin, :make, :model, :status)'
+            'INSERT INTO vehicles (registration_number, vin, make, model, year, fuel_type, status)
+             VALUES (:registration_number, :vin, :make, :model, :year, :fuel_type, :status)'
         );
         $stmt->execute($data);
 
@@ -81,17 +81,13 @@ class VehicleRepository
                  vin = :vin,
                  make = :make,
                  model = :model,
+                 year = :year,
+                 fuel_type = :fuel_type,
                  status = :status
              WHERE id = :id'
         );
-        $stmt->execute([
-            'registration_number' => $data['registration_number'],
-            'vin' => $data['vin'],
-            'make' => $data['make'],
-            'model' => $data['model'],
-            'status' => $data['status'],
-            'id' => $id,
-        ]);
+        $data['id'] = $id;
+        $stmt->execute($data);
     }
 
     public function deactivate(int $id): void
@@ -115,6 +111,8 @@ class VehicleRepository
             'vin' => strtoupper(str_replace(' ', '', $this->cleanText((string) ($data['vin'] ?? ''), 17))),
             'make' => $this->cleanText((string) ($data['make'] ?? ''), 80),
             'model' => $this->cleanText((string) ($data['model'] ?? ''), 80),
+            'year' => (int) ($data['year'] ?? 0) ?: null,
+            'fuel_type' => $this->cleanText((string) ($data['fuel_type'] ?? ''), 40) ?: null,
             'status' => $this->cleanText((string) ($data['status'] ?? 'active'), 20),
         ];
     }
@@ -135,6 +133,10 @@ class VehicleRepository
 
         if ($data['model'] === '') {
             throw new DomainException('Model is required.');
+        }
+
+        if ($data['year'] !== null && ($data['year'] < 1900 || $data['year'] > (int) date('Y') + 1)) {
+            throw new DomainException('Enter a valid year.');
         }
 
         if (!in_array($data['status'], ['active', 'inactive', 'service'], true)) {

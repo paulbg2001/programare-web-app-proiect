@@ -49,14 +49,22 @@ class DashboardRepository
 
     public function getActiveAssignmentsCount(): int
     {
-        if (!$this->tableExists('vehicle_assignments')) {
+        // First check if the table exists to avoid SQL errors during initial setup
+        $stmt = $this->db->prepare(
+            'SELECT COUNT(*)
+             FROM information_schema.TABLES
+             WHERE TABLE_SCHEMA = DATABASE()
+               AND TABLE_NAME = :table_name'
+        );
+        $stmt->execute(['table_name' => 'vehicle_assignments']);
+        if ((int) $stmt->fetchColumn() === 0) {
             return 0;
         }
 
         $stmt = $this->db->query(
             "SELECT COUNT(*)
              FROM vehicle_assignments
-             WHERE start_date <= CURDATE()
+             WHERE (start_date <= CURDATE())
                AND (end_date IS NULL OR end_date >= CURDATE())"
         );
 
@@ -79,7 +87,9 @@ class DashboardRepository
                 END AS document_status
              FROM vehicle_documents vd
              INNER JOIN vehicles v ON v.id = vd.vehicle_id
-             ORDER BY vd.expiration_date ASC, v.registration_number ASC
+             ORDER BY
+                CASE WHEN vd.expiration_date < CURDATE() THEN 0 ELSE 1 END,
+                vd.expiration_date ASC
              LIMIT 10"
         );
 

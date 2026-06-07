@@ -23,6 +23,8 @@ function vehicleInput(array $source): array
         'vin' => strtoupper(str_replace(' ', '', cleanText($source['vin'] ?? '', 17))),
         'make' => cleanText($source['make'] ?? '', 80),
         'model' => cleanText($source['model'] ?? '', 80),
+        'year' => (int) ($source['year'] ?? 0) ?: null,
+        'fuel_type' => cleanText($source['fuel_type'] ?? '', 40),
         'status' => cleanText($source['status'] ?? 'active', 20),
     ];
 }
@@ -45,6 +47,10 @@ function validateVehicle(array $data): array
 
     if ($data['model'] === '') {
         $errors[] = 'Model is required.';
+    }
+
+    if ($data['year'] !== null && ($data['year'] < 1900 || $data['year'] > (int) date('Y') + 1)) {
+        $errors[] = 'Enter a valid year of manufacture.';
     }
 
     if (!in_array($data['status'], ['active', 'inactive', 'service'], true)) {
@@ -75,6 +81,8 @@ $formData = [
     'vin' => '',
     'make' => '',
     'model' => '',
+    'year' => '',
+    'fuel_type' => '',
     'status' => 'active',
 ];
 $vehicles = [
@@ -109,6 +117,8 @@ try {
                         'vin' => $formData['vin'],
                         'make' => $formData['make'],
                         'model' => $formData['model'],
+                        'year' => $formData['year'],
+                        'fuel_type' => $formData['fuel_type'],
                         'status' => $formData['status'],
                     ]);
                     $_SESSION['success'] = 'Vehicle added.';
@@ -118,6 +128,8 @@ try {
                         'vin' => $formData['vin'],
                         'make' => $formData['make'],
                         'model' => $formData['model'],
+                        'year' => $formData['year'],
+                        'fuel_type' => $formData['fuel_type'],
                         'status' => $formData['status'],
                     ]);
                     $_SESSION['success'] = 'Vehicle updated.';
@@ -156,6 +168,7 @@ $isEditing = $formData['id'] !== '';
 $pageTitle = 'Vehicule';
 $pageKicker = 'Gestiune flota';
 $activePage = 'vehicles';
+$extraScripts = ['/assets/js/vehicles.js'];
 
 require __DIR__ . '/../includes/header.php';
 ?>
@@ -190,23 +203,42 @@ require __DIR__ . '/../includes/header.php';
                         <input type="hidden" name="id" value="<?php echo e((string) $formData['id']); ?>">
 
                         <div class="form-row">
-                            <label for="registration_number">Registration Number</label>
-                            <input id="registration_number" name="registration_number" type="text" value="<?php echo e($formData['registration_number']); ?>" required>
+                            <label for="registration_number">Numar Inmatriculare</label>
+                            <input id="registration_number" name="registration_number" type="text" placeholder="ex: B 123 ABC" value="<?php echo e($formData['registration_number']); ?>" required>
                         </div>
 
                         <div class="form-row">
-                            <label for="vin">VIN</label>
-                            <input id="vin" name="vin" type="text" maxlength="17" value="<?php echo e($formData['vin']); ?>" required>
+                            <label for="vin">VIN (Serie Sasiu)</label>
+                            <input id="vin" name="vin" type="text" maxlength="17" placeholder="17 caractere" value="<?php echo e($formData['vin']); ?>" required>
                         </div>
 
-                        <div class="form-row">
-                            <label for="make">Make</label>
-                            <input id="make" name="make" type="text" value="<?php echo e($formData['make']); ?>" required>
+                        <div class="form-row grid-2">
+                            <div class="form-row">
+                                <label for="make">Marca</label>
+                                <input id="make" name="make" type="text" placeholder="ex: Dacia" value="<?php echo e($formData['make']); ?>" required>
+                            </div>
+                            <div class="form-row">
+                                <label for="model">Model</label>
+                                <input id="model" name="model" type="text" placeholder="ex: Logan" value="<?php echo e($formData['model']); ?>" required>
+                            </div>
                         </div>
 
-                        <div class="form-row">
-                            <label for="model">Model</label>
-                            <input id="model" name="model" type="text" value="<?php echo e($formData['model']); ?>" required>
+                        <div class="form-row grid-2">
+                            <div class="form-row">
+                                <label for="year">An Fabricatie</label>
+                                <input id="year" name="year" type="number" min="1900" max="<?php echo date('Y') + 1; ?>" placeholder="ex: 2022" value="<?php echo e((string) $formData['year']); ?>">
+                            </div>
+                            <div class="form-row">
+                                <label for="fuel_type">Tip Combustibil</label>
+                                <select id="fuel_type" name="fuel_type">
+                                    <option value="">Selecteaza...</option>
+                                    <?php foreach (['Benzina', 'Motorina', 'Electric', 'Hibrid', 'GPL'] as $fuel): ?>
+                                        <option value="<?php echo e($fuel); ?>" <?php echo $formData['fuel_type'] === $fuel ? 'selected' : ''; ?>>
+                                            <?php echo e($fuel); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
                         </div>
 
                         <div class="form-row">
@@ -222,7 +254,7 @@ require __DIR__ . '/../includes/header.php';
 
                         <div class="form-actions">
                             <button class="primary-button compact-button" type="submit">
-                                <?php echo $isEditing ? 'Save' : 'Add'; ?>
+                                <?php echo $isEditing ? 'Salveaza' : 'Adauga Vehicul'; ?>
                             </button>
                         </div>
                     </form>
@@ -230,8 +262,8 @@ require __DIR__ . '/../includes/header.php';
 
                 <section class="page-panel management-list-panel" aria-labelledby="vehicles-list-title">
                     <div class="section-title-row">
-                        <h2 id="vehicles-list-title">Vehicle List</h2>
-                        <span><?php echo (int) $vehicles['total']; ?> total</span>
+                        <h2 id="vehicles-list-title">Lista Vehicule</h2>
+                        <span><?php echo (int) $vehicles['total']; ?> in total</span>
                     </div>
 
                     <?php if ($vehicles['items']): ?>
@@ -239,19 +271,24 @@ require __DIR__ . '/../includes/header.php';
                             <table class="documents-table management-table">
                                 <thead>
                                     <tr>
-                                        <th>Registration</th>
-                                        <th>VIN</th>
-                                        <th>Vehicle</th>
+                                        <th>Inmatriculare</th>
+                                        <th>Vehicul</th>
+                                        <th>An</th>
+                                        <th>Combustibil</th>
                                         <th>Status</th>
-                                        <th>Actions</th>
+                                        <th>Actiuni</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach ($vehicles['items'] as $vehicle): ?>
                                         <tr>
-                                            <td><strong><?php echo e($vehicle['registration_number']); ?></strong></td>
-                                            <td><?php echo e($vehicle['vin']); ?></td>
+                                            <td>
+                                                <strong><?php echo e($vehicle['registration_number']); ?></strong>
+                                                <div class="small-text"><?php echo e($vehicle['vin']); ?></div>
+                                            </td>
                                             <td><?php echo e($vehicle['make'] . ' ' . $vehicle['model']); ?></td>
+                                            <td><?php echo e($vehicle['year'] ?: '-'); ?></td>
+                                            <td><?php echo e($vehicle['fuel_type'] ?: '-'); ?></td>
                                             <td>
                                                 <span class="status-pill status-<?php echo e($vehicle['status']); ?>">
                                                     <?php echo e(vehicleStatusLabel($vehicle['status'])); ?>
@@ -260,10 +297,10 @@ require __DIR__ . '/../includes/header.php';
                                             <td>
                                                 <div class="inline-actions">
                                                     <a class="secondary-button" href="index.php?edit=<?php echo (int) $vehicle['id']; ?>&page=<?php echo (int) $vehicles['page']; ?>">Edit</a>
-                                                    <form method="post" action="index.php?page=<?php echo (int) $vehicles['page']; ?>">
+                                                    <form method="post" action="index.php?page=<?php echo (int) $vehicles['page']; ?>" onsubmit="return confirm('Sigur dorești să marchezi acest vehicul ca inactiv?');">
                                                         <input type="hidden" name="action" value="deactivate">
                                                         <input type="hidden" name="id" value="<?php echo (int) $vehicle['id']; ?>">
-                                                        <button class="danger-button" type="submit">Deactivate</button>
+                                                        <button class="danger-button" type="submit">Dezactiveaza</button>
                                                     </form>
                                                 </div>
                                             </td>
