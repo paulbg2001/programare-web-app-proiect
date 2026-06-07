@@ -38,6 +38,32 @@ function indexExists(PDO $db, string $table, string $index): bool
 
 $db = getDbConnection();
 
+$db->exec(
+    "CREATE TABLE IF NOT EXISTS users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(60) NOT NULL UNIQUE,
+        full_name VARCHAR(100) NOT NULL,
+        email VARCHAR(150) NOT NULL UNIQUE,
+        password_hash VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+);
+
+$db->exec(
+    "CREATE TABLE IF NOT EXISTS vehicles (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        registration_number VARCHAR(30) NOT NULL UNIQUE,
+        vin VARCHAR(17) NOT NULL UNIQUE,
+        make VARCHAR(80) NOT NULL,
+        model VARCHAR(80) NOT NULL,
+        year INT DEFAULT NULL,
+        fuel_type VARCHAR(40) DEFAULT NULL,
+        status ENUM('active', 'inactive', 'service') NOT NULL DEFAULT 'active',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+);
+
 if (!columnExists($db, 'users', 'username')) {
     $db->exec('ALTER TABLE users ADD COLUMN username VARCHAR(60) NULL AFTER id');
 }
@@ -105,6 +131,35 @@ $db->exec(
             ON DELETE CASCADE,
         CONSTRAINT fk_vehicle_assignments_driver
             FOREIGN KEY (driver_id) REFERENCES drivers(id)
+            ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+);
+
+$db->exec(
+    "CREATE TABLE IF NOT EXISTS vehicle_documents (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        vehicle_id INT NOT NULL,
+        document_type VARCHAR(100) NOT NULL,
+        expiration_date DATE NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT fk_vehicle_documents_vehicle
+            FOREIGN KEY (vehicle_id) REFERENCES vehicles(id)
+            ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+);
+
+$db->exec(
+    "CREATE TABLE IF NOT EXISTS vehicle_tires (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        vehicle_id INT NOT NULL,
+        tire_type VARCHAR(40) NOT NULL,
+        brand VARCHAR(80) DEFAULT NULL,
+        size VARCHAR(40) DEFAULT NULL,
+        installed_date DATE NOT NULL,
+        change_date DATE NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT fk_vehicle_tires_vehicle
+            FOREIGN KEY (vehicle_id) REFERENCES vehicles(id)
             ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
 );

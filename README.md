@@ -51,6 +51,7 @@ Fisierul `database.sql` creeaza baza de date `car_management` si tabelele:
 - `drivers`
 - `vehicle_documents`
 - `vehicle_assignments`
+- `vehicle_tires`
 
 Conexiunea foloseste implicit aceste valori:
 

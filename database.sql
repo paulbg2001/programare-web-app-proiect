@@ -59,3 +59,17 @@ CREATE TABLE IF NOT EXISTS vehicle_assignments (
         FOREIGN KEY (driver_id) REFERENCES drivers(id)
         ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS vehicle_tires (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    vehicle_id INT NOT NULL,
+    tire_type VARCHAR(40) NOT NULL,
+    brand VARCHAR(80) DEFAULT NULL,
+    size VARCHAR(40) DEFAULT NULL,
+    installed_date DATE NOT NULL,
+    change_date DATE NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_vehicle_tires_vehicle
+        FOREIGN KEY (vehicle_id) REFERENCES vehicles(id)
+        ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
