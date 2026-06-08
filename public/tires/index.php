@@ -15,6 +15,18 @@ function cleanText(string $value, int $maxLength): string
     return substr(trim(strip_tags($value)), 0, $maxLength);
 }
 
+function normalizeTireSize(string $value): string
+{
+    $value = strtoupper(cleanText($value, 40));
+    $value = preg_replace('/\s+/', '', $value) ?? '';
+
+    if (preg_match('/^(\d+)\/(\d+)R(\d+)$/', $value, $matches)) {
+        return $matches[1] . '/' . $matches[2] . ' R' . $matches[3];
+    }
+
+    return $value;
+}
+
 function tireStatus(string $date): string
 {
     if ($date < date('Y-m-d')) {
@@ -61,7 +73,7 @@ try {
             'vehicle_id' => (int) ($_POST['vehicle_id'] ?? 0),
             'tire_type' => cleanText($_POST['tire_type'] ?? '', 40),
             'brand' => cleanText($_POST['brand'] ?? '', 80),
-            'size' => cleanText($_POST['size'] ?? '', 40),
+            'size' => normalizeTireSize($_POST['size'] ?? ''),
             'installed_date' => cleanText($_POST['installed_date'] ?? '', 10),
             'change_date' => cleanText($_POST['change_date'] ?? '', 10),
         ];
@@ -72,6 +84,12 @@ try {
 
         if ($formData['tire_type'] === '') {
             $errors[] = 'Tipul anvelopelor este obligatoriu.';
+        }
+
+        if ($formData['size'] === '') {
+            $errors[] = 'Dimensiunea anvelopelor este obligatorie.';
+        } elseif (!preg_match('/^\d+\/\d+ R\d+$/', $formData['size'])) {
+            $errors[] = 'Dimensiunea trebuie sa fie in formatul 205/55 R16.';
         }
 
         if ($formData['installed_date'] === '') {
@@ -190,7 +208,7 @@ require __DIR__ . '/../includes/header.php';
                             </div>
                             <div class="form-row">
                                 <label for="size">Dimensiune</label>
-                                <input id="size" name="size" type="text" value="<?php echo e($formData['size']); ?>" placeholder="ex: 205/55 R16">
+                                <input id="size" name="size" type="text" value="<?php echo e($formData['size']); ?>" placeholder="ex: 205/55 R16" pattern="[0-9]+/[0-9]+ R[0-9]+" title="Format: 205/55 R16" required>
                             </div>
                         </div>
 

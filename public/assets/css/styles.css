@@ -104,7 +104,7 @@ a:hover {
 
 .auth-tabs {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 6px;
     padding: 5px;
     margin-bottom: 18px;
@@ -119,6 +119,8 @@ a:hover {
     justify-content: center;
     color: var(--muted);
     border-radius: 6px;
+    text-align: center;
+    line-height: 1.2;
 }
 
 .auth-tabs a[aria-current="page"] {
@@ -133,6 +135,12 @@ a:hover {
 
 .auth-panel.is-active {
     display: block;
+}
+
+.auth-helper {
+    margin: -2px 0 0;
+    text-align: right;
+    font-size: 14px;
 }
 
 .auth-form,
@@ -318,6 +326,9 @@ a:hover {
 
 .app-content {
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
 .app-header {
@@ -378,11 +389,34 @@ a:hover {
 }
 
 .app-main {
+    flex: 1;
     padding: 26px 28px 36px;
+}
+
+.app-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 16px 28px 24px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    font-size: 14px;
+}
+
+.app-footer span {
+    font-weight: 800;
+}
+
+.app-footer a {
+    font-size: 14px;
 }
 
 .dashboard-shell,
 .management-shell,
+.profile-shell,
 .page-panel {
     width: min(100%, 1180px);
     margin: 0 auto;
@@ -649,6 +683,18 @@ a:hover {
     margin: 0;
 }
 
+.profile-grid {
+    display: grid;
+    grid-template-columns: minmax(280px, 420px) minmax(0, 1fr);
+    gap: 18px;
+    align-items: start;
+}
+
+.profile-actions-stack {
+    display: grid;
+    gap: 18px;
+}
+
 .profile-list div {
     display: grid;
     grid-template-columns: 120px minmax(0, 1fr);
@@ -669,6 +715,7 @@ a:hover {
 .profile-list dd {
     margin: 0;
     font-weight: 800;
+    overflow-wrap: anywhere;
 }
 
 @media (max-width: 1120px) {
@@ -717,6 +764,10 @@ a:hover {
         grid-template-columns: 1fr;
     }
 
+    .profile-grid {
+        grid-template-columns: 1fr;
+    }
+
     .grid-2 {
         grid-template-columns: 1fr;
     }
@@ -732,7 +783,8 @@ a:hover {
     }
 
     .app-main,
-    .app-header {
+    .app-header,
+    .app-footer {
         padding-left: 16px;
         padding-right: 16px;
     }

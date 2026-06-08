@@ -15,7 +15,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' && isset($_SESSION['user_id'])) {
     session_start();
 }
 
-$mode = ($_GET['mode'] ?? '') === 'register' ? 'register' : 'login';
+$requestedMode = $_GET['mode'] ?? '';
+$mode = in_array($requestedMode, ['register', 'reset'], true) ? $requestedMode : 'login';
 $error = '';
 $success = $_SESSION['success'] ?? '';
 $values = [
@@ -46,7 +47,10 @@ function isValidUsername(string $username): bool
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? 'login';
-    $mode = $action === 'register' ? 'register' : 'login';
+    $mode = [
+        'register' => 'register',
+        'reset_password' => 'reset',
+    ][$action] ?? 'login';
 
     if ($action === 'login') {
         $username = normalizeUsername($_POST['username'] ?? '');
@@ -140,6 +144,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
+
+    if ($action === 'reset_password') {
+        $username = normalizeUsername($_POST['username'] ?? '');
+        $email = cleanAuthText($_POST['email'] ?? '', 150);
+        $password = $_POST['password'] ?? '';
+        $confirmPassword = $_POST['confirm_password'] ?? '';
+        $values['username'] = $username;
+        $values['email'] = $email;
+
+        if (!isValidUsername($username)) {
+            $error = 'Username must have 3-40 lowercase letters, numbers or underscores.';
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $error = 'Enter a valid email address.';
+        } elseif (strlen($password) < 6) {
+            $error = 'Password must have at least 6 characters.';
+        } elseif ($password !== $confirmPassword) {
+            $error = 'Passwords do not match.';
+        } else {
+            try {
+                $db = getDbConnection();
+                $stmt = $db->prepare(
+                    'SELECT id
+                     FROM users
+                     WHERE username = :username
+                       AND email = :email
+                     LIMIT 1'
+                );
+                $stmt->execute([
+                    'username' => $username,
+                    'email' => $email,
+                ]);
+                $user = $stmt->fetch();
+
+                if (!$user) {
+                    $error = 'No account found for this username and email.';
+                } else {
+                    $stmt = $db->prepare(
+                        'UPDATE users
+                         SET password_hash = :password_hash
+                         WHERE id = :id'
+                    );
+                    $stmt->execute([
+                        'password_hash' => password_hash($password, PASSWORD_DEFAULT),
+                        'id' => (int) $user['id'],
+                    ]);
+
+                    $_SESSION['success'] = 'Password updated. You can log in now.';
+                    header('Location: login.php');
+                    exit;
+                }
+            } catch (PDOException $e) {
+                appLog('Password reset failed', [
+                    'username' => $username,
+                    'email' => $email,
+                    'code' => $e->getCode(),
+                    'message' => $e->getMessage(),
+                ]);
+
+                $error = 'Password reset failed. Check that the database schema is up to date.';
+            }
+        }
+    }
 }
 ?>
 <!doctype html>
@@ -166,6 +232,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <nav class="auth-tabs" aria-label="Schimba formularul">
                 <a href="login.php" <?php echo $mode === 'login' ? 'aria-current="page"' : ''; ?>>Login</a>
                 <a href="login.php?mode=register" <?php echo $mode === 'register' ? 'aria-current="page"' : ''; ?>>Register</a>
+                <a href="login.php?mode=reset" <?php echo $mode === 'reset' ? 'aria-current="page"' : ''; ?>>Am uitat parola</a>
             </nav>
 
             <?php if ($error): ?>
@@ -195,6 +262,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="button-row">
                         <button class="primary-button" type="submit">Login</button>
                     </div>
+
+                    <p class="auth-helper">
+                        <a href="login.php?mode=reset">Ai uitat parola?</a>
+                    </p>
                 </form>
             </div>
 
@@ -228,6 +299,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <div class="button-row">
                         <button class="primary-button" type="submit">Register</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="auth-panel <?php echo $mode === 'reset' ? 'is-active' : ''; ?>" <?php echo $mode === 'reset' ? '' : 'aria-hidden="true"'; ?>>
+                <form class="auth-form" method="post" action="login.php?mode=reset" data-auth-form novalidate>
+                    <input type="hidden" name="action" value="reset_password">
+
+                    <div class="form-row">
+                        <label for="reset_username">Username</label>
+                        <input id="reset_username" name="username" type="text" autocomplete="username" placeholder="ex: popescu_ion" value="<?php echo e($mode === 'reset' ? $values['username'] : ''); ?>" required>
+                        <span class="field-error" aria-live="polite"></span>
+                    </div>
+
+                    <div class="form-row">
+                        <label for="reset_email">Email</label>
+                        <input id="reset_email" name="email" type="email" autocomplete="email" placeholder="nume@example.com" value="<?php echo e($mode === 'reset' ? $values['email'] : ''); ?>" required>
+                        <span class="field-error" aria-live="polite"></span>
+                    </div>
+
+                    <div class="form-row">
+                        <label for="reset_password">Parola noua</label>
+                        <input id="reset_password" name="password" type="password" autocomplete="new-password" placeholder="Minimum 6 caractere" required>
+                        <span class="field-error" aria-live="polite"></span>
+                    </div>
+
+                    <div class="form-row">
+                        <label for="reset_confirm_password">Confirma parola</label>
+                        <input id="reset_confirm_password" name="confirm_password" type="password" autocomplete="new-password" placeholder="Repeta parola" required>
+                        <span class="field-error" aria-live="polite"></span>
+                    </div>
+
+                    <div class="button-row">
+                        <button class="primary-button" type="submit">Reseteaza parola</button>
                     </div>
                 </form>
             </div>

@@ -54,34 +54,75 @@ try {
     $db = getDbConnection();
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $formData = [
-            'vehicle_id' => (int) ($_POST['vehicle_id'] ?? 0),
-            'document_type' => cleanText($_POST['document_type'] ?? '', 100),
-            'expiration_date' => cleanText($_POST['expiration_date'] ?? '', 10),
-        ];
+        $action = $_POST['action'] ?? 'create';
 
-        if ($formData['vehicle_id'] <= 0) {
-            $errors[] = 'Selecteaza un vehicul.';
+        if ($action === 'delete') {
+            $documentId = (int) ($_POST['id'] ?? 0);
+
+            if ($documentId <= 0) {
+                $errors[] = 'Document invalid.';
+            } else {
+                $stmt = $db->prepare('DELETE FROM vehicle_documents WHERE id = :id');
+                $stmt->execute(['id' => $documentId]);
+
+                $_SESSION['success'] = 'Document sters.';
+                header('Location: index.php');
+                exit;
+            }
         }
 
-        if ($formData['document_type'] === '') {
-            $errors[] = 'Tipul documentului este obligatoriu.';
+        if ($action === 'create') {
+            $formData = [
+                'vehicle_id' => (int) ($_POST['vehicle_id'] ?? 0),
+                'document_type' => cleanText($_POST['document_type'] ?? '', 100),
+                'expiration_date' => cleanText($_POST['expiration_date'] ?? '', 10),
+            ];
+
+            if ($formData['vehicle_id'] <= 0) {
+                $errors[] = 'Selecteaza un vehicul.';
+            }
+
+            if ($formData['document_type'] === '') {
+                $errors[] = 'Tipul documentului este obligatoriu.';
+            }
+
+            if ($formData['expiration_date'] === '') {
+                $errors[] = 'Data expirarii este obligatorie.';
+            }
+
+            if (!$errors) {
+                $stmt = $db->prepare(
+                    'SELECT id
+                     FROM vehicle_documents
+                     WHERE vehicle_id = :vehicle_id
+                       AND document_type = :document_type
+                     LIMIT 1'
+                );
+                $stmt->execute([
+                    'vehicle_id' => $formData['vehicle_id'],
+                    'document_type' => $formData['document_type'],
+                ]);
+
+                if ($stmt->fetch()) {
+                    $errors[] = 'Acest vehicul are deja un document de tip ' . $formData['document_type'] . '. Sterge documentul existent inainte sa adaugi altul.';
+                }
+            }
+
+            if (!$errors) {
+                $stmt = $db->prepare(
+                    'INSERT INTO vehicle_documents (vehicle_id, document_type, expiration_date)
+                     VALUES (:vehicle_id, :document_type, :expiration_date)'
+                );
+                $stmt->execute($formData);
+
+                $_SESSION['success'] = 'Document adaugat.';
+                header('Location: index.php');
+                exit;
+            }
         }
 
-        if ($formData['expiration_date'] === '') {
-            $errors[] = 'Data expirarii este obligatorie.';
-        }
-
-        if (!$errors) {
-            $stmt = $db->prepare(
-                'INSERT INTO vehicle_documents (vehicle_id, document_type, expiration_date)
-                 VALUES (:vehicle_id, :document_type, :expiration_date)'
-            );
-            $stmt->execute($formData);
-
-            $_SESSION['success'] = 'Document adaugat.';
-            header('Location: index.php');
-            exit;
+        if (!in_array($action, ['create', 'delete'], true)) {
+            $errors[] = 'Actiune invalida.';
         }
     }
 
@@ -139,6 +180,8 @@ require __DIR__ . '/../includes/header.php';
                     </div>
 
                     <form class="management-form" method="post" action="index.php">
+                        <input type="hidden" name="action" value="create">
+
                         <div class="form-row">
                             <label for="vehicle_id">Vehicul</label>
                             <select id="vehicle_id" name="vehicle_id" required>
@@ -188,6 +231,7 @@ require __DIR__ . '/../includes/header.php';
                                         <th>Document</th>
                                         <th>Expira</th>
                                         <th>Status</th>
+                                        <th>Actiuni</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -204,6 +248,15 @@ require __DIR__ . '/../includes/header.php';
                                                 <span class="status-pill status-<?php echo e($status); ?>">
                                                     <?php echo e(documentStatusLabel($status)); ?>
                                                 </span>
+                                            </td>
+                                            <td>
+                                                <div class="inline-actions">
+                                                    <form method="post" action="index.php" onsubmit="return confirm('Sigur stergi acest document?');">
+                                                        <input type="hidden" name="action" value="delete">
+                                                        <input type="hidden" name="id" value="<?php echo (int) $document['id']; ?>">
+                                                        <button class="danger-button" type="submit">Sterge</button>
+                                                    </form>
+                                                </div>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>
